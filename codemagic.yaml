@@ -1,0 +1,28 @@
+workflows:
+  shelfplayer-android:
+    name: ShelfPlayer Android APK
+    instance_type: linux_x2
+    max_build_duration: 30
+    environment:
+      java: 17
+      ubuntu: 24.04
+    cache:
+      cache_paths:
+        - $HOME/.gradle/caches
+    scripts:
+      - name: Set Android SDK location
+        script: |
+          echo "sdk.dir=$ANDROID_SDK_ROOT" > "$CM_BUILD_DIR/local.properties"
+      - name: Install Gradle 9.5
+        script: |
+          curl -L --fail --retry 3 -o /tmp/gradle.zip https://services.gradle.org/distributions/gradle-9.5.0-bin.zip
+          rm -rf /tmp/gradle-9.5.0
+          unzip -q /tmp/gradle.zip -d /tmp
+          /tmp/gradle-9.5.0/bin/gradle --version
+      - name: Build installable debug APK
+        script: |
+          /tmp/gradle-9.5.0/bin/gradle --no-daemon :app:assembleDebug
+          mkdir -p "$CM_BUILD_DIR/output"
+          cp app/build/outputs/apk/debug/app-debug.apk "$CM_BUILD_DIR/output/ShelfPlayer.apk"
+    artifacts:
+      - output/ShelfPlayer.apk
